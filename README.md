@@ -7,7 +7,7 @@ ASSIGNMENT2_AI
    * game – bàn cờ và luật
    * ui – giao diện
    * train_ml.py – huấn luyện mô hình
-   * main.py – chạy demo
+* main.py – chạy demo
 * requirements.txt – thư viện sử dụng
 
 
