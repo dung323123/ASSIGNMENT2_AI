@@ -13,4 +13,14 @@ ASSIGNMENT2_AI
 
 ## Note
     Xem kỹ src/game/board
-    Khi định nghĩa agent, phải kế thừa BaseAgent; tái định nghĩa và giữ nguyên chữ ký hàm get_move 
+    Khi định nghĩa agent, phải kế thừa BaseAgent; tái định nghĩa và giữ nguyên chữ ký hàm get_move
+
+## Run UI
+
+* Install requirements first
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+* Run
+   ..\Assignment2_AI> python -m src.ui.main
