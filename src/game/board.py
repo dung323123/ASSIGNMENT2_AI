@@ -24,8 +24,99 @@ Quy ước: Hệ tọa độ ở góc trên trái bàn cờ, (r,c) = (hàng, c�
     - Đi xuống: r + 1
     - Sang phải: c + 1
 '''
+TOT_ORIGINAL = np.array([
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [9, 9, 9, 11, 12, 11, 9, 9, 9], 
+    [19, 19, 19, 21, 22, 21, 19, 19, 19],
+    [29, 29, 29, 31, 32, 31, 29, 29, 29],
+    [39, 39, 39, 41, 42, 41, 39, 39, 39],
+    [49, 49, 49, 51, 52, 51, 49, 49, 49],
+])
+TOT_RED_PST_BASE = np.flipud(TOT_ORIGINAL) # Đỏ (dưới) cần điểm cao ở trên
+TOT_BLACK_PST_BASE = TOT_ORIGINAL         # Đen (trên) cần điểm cao ở dưới
+
+# --- MÃ (MA) ---
+MA_RED_PST_BASE = np.array([
+    [90, 90, 90, 90, 90, 90, 90, 90, 90],
+    [90, 96, 96, 99, 100, 99, 96, 96, 90],
+    [90, 96, 98, 100, 103, 100, 98, 96, 90],
+    [96, 99, 100, 103, 104, 103, 100, 99, 96],
+    [98, 101, 102, 103, 105, 103, 102, 101, 98],
+    [100, 103, 104, 106, 106, 106, 104, 103, 100],
+    [98, 101, 102, 103, 104, 103, 102, 101, 98],
+    [92, 95, 96, 97, 98, 97, 96, 95, 92],
+    [90, 93, 94, 95, 96, 95, 94, 93, 90],
+    [80, 88, 90, 90, 92, 90, 90, 88, 80]
+])
+MA_BLACK_PST_BASE = np.flipud(MA_RED_PST_BASE)
+
+# --- XE (XE) ---
+XE_RED_PST_BASE = np.array([
+    [100, 100, 100, 102, 102, 102, 100, 100, 100],
+    [102, 104, 104, 104, 105, 104, 104, 104, 102],
+    [100, 102, 102, 102, 104, 102, 102, 102, 100],
+    [98, 100, 100, 100, 102, 100, 100, 100, 98],
+    [96, 98, 98, 98, 100, 98, 98, 98, 96],
+    [94, 96, 96, 96, 98, 96, 96, 96, 94],
+    [90, 92, 92, 92, 94, 92, 92, 92, 90],
+    [85, 87, 87, 87, 88, 87, 87, 87, 85],
+    [80, 82, 82, 82, 84, 82, 82, 82, 80],
+    [70, 75, 75, 75, 78, 75, 75, 75, 70]
+])
+XE_BLACK_PST_BASE = np.flipud(XE_RED_PST_BASE)
+
+# --- PHÁO (PHAO) ---
+PHAO_RED_PST_BASE = np.array([
+    [90, 90, 90, 90, 90, 90, 90, 90, 90],
+    [90, 92, 93, 93, 95, 93, 93, 92, 90],
+    [92, 94, 94, 95, 96, 95, 94, 94, 92],
+    [93, 95, 96, 96, 97, 96, 96, 95, 93],
+    [90, 92, 93, 93, 95, 93, 93, 92, 90],
+    [85, 87, 88, 88, 90, 88, 88, 87, 85],
+    [80, 82, 83, 83, 85, 83, 83, 82, 80],
+    [75, 77, 78, 78, 80, 78, 78, 77, 75],
+    [70, 72, 73, 73, 75, 73, 73, 72, 70],
+    [60, 65, 65, 65, 70, 65, 65, 65, 60]
+])
+PHAO_BLACK_PST_BASE = np.flipud(PHAO_RED_PST_BASE)
+
+# --- SĨ (SI) ---
+SI_RED_PST_BASE = np.zeros((BOARD_ROWS, BOARD_COLS))
+# Thưởng điểm cho vị trí chéo phòng thủ hoàn hảo
+SI_RED_PST_BASE[8, 3] = 20
+SI_RED_PST_BASE[8, 5] = 20
+SI_RED_PST_BASE[9, 4] = 30
+SI_BLACK_PST_BASE = np.flipud(SI_RED_PST_BASE)
 
 
+# --- TƯỢNG (TUONG_KINH) ---
+TUONG_KINH_RED_PST_BASE = np.zeros((BOARD_ROWS, BOARD_COLS))
+# Thưởng điểm cho vị trí góc Tượng
+TUONG_KINH_RED_PST_BASE[7, 2] = 10
+TUONG_KINH_RED_PST_BASE[7, 6] = 10
+TUONG_KINH_RED_PST_BASE[9, 2] = 10
+TUONG_KINH_RED_PST_BASE[9, 6] = 10
+TUONG_KINH_BLACK_PST_BASE = np.flipud(TUONG_KINH_RED_PST_BASE)
+
+# --- TƯỚNG (TUONG) ---
+TUONG_RED_PST_BASE = np.zeros((BOARD_ROWS, BOARD_COLS))
+TUONG_BLACK_PST_BASE = np.zeros((BOARD_ROWS, BOARD_COLS))
+
+
+# BẢN ĐỒ TRA CỨU HOÀN CHỈNH
+PST_MAP = {
+    TOT: {RED: TOT_RED_PST_BASE, BLACK: TOT_BLACK_PST_BASE},
+    MA: {RED: MA_RED_PST_BASE, BLACK: MA_BLACK_PST_BASE},
+    XE: {RED: XE_RED_PST_BASE, BLACK: XE_BLACK_PST_BASE},
+    PHAO: {RED: PHAO_RED_PST_BASE, BLACK: PHAO_BLACK_PST_BASE},
+    SI: {RED: SI_RED_PST_BASE, BLACK: SI_BLACK_PST_BASE},
+    TUONG_KINH: {RED: TUONG_KINH_RED_PST_BASE, BLACK: TUONG_KINH_BLACK_PST_BASE},
+    TUONG: {RED: TUONG_RED_PST_BASE, BLACK: TUONG_BLACK_PST_BASE},
+}
 class GameState:
 
     def __init__(self, initial_board: np.ndarray = None, current_player: Player = RED, history: List[Move] = None):
@@ -195,14 +286,14 @@ class GameState:
                     tp = self.get_piece_at((nr, nc))
                     if (piece * tp) <= 0:
                         moves.append((source, (nr, nc)))
-
+      
         return moves
 
     # KIỂM TRA CHIẾU & TƯỚNG ĐỐI MẶT
     # ─────────────────────────────────────────────────────────────
-    def is_check(self, board: np.ndarray, player: Player) -> bool:
+    def is_check(self, player: Player) -> bool:
         """
-        Kiểm tra xem Tướng của `player` có đang bị chiếu không.
+        Kiểm tra xem Tướng của `player` có đang bị chiếu trên self.board không.
         Ý tưởng: lấy tất cả nước đi PHI NƯỚC CHỐT của quân địch, nếu có quân địch nào
         có thể bắt đúng ô tướng → player đang bị chiếu.
         """
@@ -212,7 +303,7 @@ class GameState:
         opponent = -player
         for r in range(BOARD_ROWS):
             for c in range(BOARD_COLS):
-                piece = board[r, c]
+                piece = self.board[r, c] # <<< Dùng self.board
                 if piece * opponent > 0:
                     for _, target in self._get_moves_for_piece(r, c):
                         if target == general_pos:
@@ -267,7 +358,9 @@ class GameState:
                     raw_moves = self._get_moves_for_piece(r, c)
                     for move in raw_moves:
                         test_state = self.make_move(move)
-                        if not test_state.is_check(test_state.board, self.current_player) and not test_state.is_general_facing():
+                        # Bàn cờ mới là test_state.board
+                        # Kiểm tra xem Tướng của người vừa đi (self.current_player) có bị chiếu trên bàn cờ mới không.
+                        if not test_state.is_check(self.current_player) and not test_state.is_general_facing():
                             legal.append(move)
         return legal
 
@@ -278,20 +371,83 @@ class GameState:
         """
         return not self.get_all_legal_moves()
 
+    # def evaluate_heuristic(self, player: Player) -> float:
+    #     """
+    #     Heuristic cơ bản cho Minimax:
+    #     Tính tổng giá trị vật chất quân cờ (không xét vị trí)
+    #     Note: Minimax tự mplement lại cho phù hợp
+    #     """
+    #     values = {TUONG: 1000, XE: 9, PHAO: 4.5, MA: 4, SI: 2, TUONG_KINH: 2, TOT: 1}
+    #     score = 0
+    #     for r in range(BOARD_ROWS):
+    #         for c in range(BOARD_COLS):
+    #             piece = self.board[r, c]
+    #             if piece != EMPTY:
+    #                 score += values[abs(piece)] * (1 if piece * player > 0 else -1)
+    #     return score
+
     def evaluate_heuristic(self, player: Player) -> float:
         """
-        Heuristic cơ bản cho Minimax:
-        Tính tổng giá trị vật chất quân cờ (không xét vị trí)
-        Note: Minimax tự mplement lại cho phù hợp
+        Heuristic cải tiến: Tính tổng Giá trị Vật chất + Giá trị Vị trí + An toàn Tướng.
         """
-        values = {TUONG: 1000, XE: 9, PHAO: 4.5, MA: 4, SI: 2, TUONG_KINH: 2, TOT: 1}
-        score = 0
+        # 1. Giá trị Vật chất (Material Values) - Tướng có giá trị cực cao
+        values = {TUONG: 20000, XE: 900, PHAO: 450, MA: 400, SI: 200, TUONG_KINH: 200, TOT: 100}
+        
+        red_score = 0
+        black_score = 0
+        red_advisor_count = 0
+        black_advisor_count = 0
+        red_elephant_count = 0
+        black_elephant_count = 0
+
         for r in range(BOARD_ROWS):
             for c in range(BOARD_COLS):
                 piece = self.board[r, c]
                 if piece != EMPTY:
-                    score += values[abs(piece)] * (1 if piece * player > 0 else -1)
-        return score
+                    abs_piece = abs(piece)
+                    current_player = RED if piece > 0 else BLACK
+                    
+                    # Lấy điểm Vật chất (nhân 100 để tránh số thập phân)
+                    material_value = values[abs_piece]
+                    
+                    # Lấy điểm Vị trí từ PSTs
+                    positional_value = PST_MAP.get(abs_piece, {}).get(current_player, 0)[r, c]
+                    
+                    total_value = material_value + positional_value
+
+                    if current_player == RED:
+                        red_score += total_value
+                        if abs_piece == SI: red_advisor_count += 1
+                        if abs_piece == TUONG_KINH: red_elephant_count += 1
+                    else:
+                        black_score += total_value
+                        if abs_piece == SI: black_advisor_count += 1
+                        if abs_piece == TUONG_KINH: black_elephant_count += 1
+        
+        # 2. An toàn Tướng (King Safety) - Rất quan trọng
+        
+        # Phạt nếu thiếu Sĩ/Tượng (giữ cặp Sĩ Tượng bảo vệ Tướng)
+        if red_advisor_count < 2 or red_elephant_count < 2:
+            red_score -= 150 
+        
+        if black_advisor_count < 2 or black_elephant_count < 2:
+            black_score -= 150
+            
+        # Thưởng nếu Tướng được bảo vệ tốt (giả định Tướng ở cung)
+        
+        # Phạt nặng nếu đang bị chiếu
+        # Ta phải sử dụng self.is_check(RED/BLACK)
+        if self.is_check(RED):
+            red_score -= 500  # Phạt nặng
+        if self.is_check(BLACK):
+            black_score -= 500
+        
+
+        # Trả về điểm theo quan điểm của 'player' đang xét (Điểm của mình - Điểm của địch)
+        if player == RED:
+            return float(red_score - black_score)
+        else: # player == BLACK
+            return float(black_score - red_score)
 
     def to_features(self) -> np.ndarray:
         """

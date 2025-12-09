@@ -86,7 +86,7 @@ class Game:
         piece = self.board.squares[move.initial.row][move.initial.col].piece
         if piece is None:
             return
-        print(f"Move {self.board.squares[move.initial.row][move.initial.col].piece.name} from ({move.initial.row},{move.initial.col}) to ({move.final.row},{move.final.col})")
+        # print(f"Move {self.board.squares[move.initial.row][move.initial.col].piece.name} from ({move.initial.row},{move.initial.col}) to ({move.final.row},{move.final.col})")
                 
         self.board.squares[move.initial.row][move.initial.col].piece = None
         image = pygame.image.load(piece.texture).convert_alpha()

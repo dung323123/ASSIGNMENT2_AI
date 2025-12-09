@@ -6,7 +6,7 @@ from src.ui.game import Game
 from src.ui.move import Move, Position
 from src.game.board import GameState
 from src.agents.random_agent import RandomAgent
-
+from src.agents.minimax_agent import MinimaxAgent
 class Main:
     def __init__(self):
         pygame.init()
@@ -15,15 +15,15 @@ class Main:
         
         self.game = Game() 
         self.playing = True # True if playing, False if stop
-        self.agent_red = RandomAgent(player_symbol=RED)
+        self.agent_red = MinimaxAgent(player_symbol=RED)
         self.agent_black = RandomAgent(player_symbol=BLACK) # replace this agent by another AI agent
         self.winner=None
 
     def show_winner(self, screen):
         if self.winner == RED:
-            text = "Winner: Random Agent"
-        elif self.winner == BLACK:
             text = "Winner: AI Agent"
+        elif self.winner == BLACK:
+            text = "Winner: Random Agent"
         else:
             text = "DRAW"
 
@@ -44,7 +44,7 @@ class Main:
         Random agent chơi game với AI
         """   
          
-        print("Start")
+        # print("Start")
         
         state = GameState()
         for _ in range(max_turns):

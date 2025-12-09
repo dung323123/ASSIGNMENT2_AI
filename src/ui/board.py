@@ -18,52 +18,53 @@ class Board:
                 self.squares[row][col] = Square(row, col)
             
     def _add_pieces(self, color):
-        # Add soldiers
+        
+        # Đảo ngược quy ước: Đỏ ở DƯỚI (hàng 9), Đen ở TRÊN (hàng 0)
+        
+        # ─────────────────────────────────────────────────────────────
+        # 1. TỐT/BINH (Soldiers/Zus)
+        # RED (Đỏ): Hàng 6 (Hàng Tốt dưới)
+        # BLACK (Đen): Hàng 3 (Hàng Tốt trên)
         for i in range(0, COLS, 2):
             if color == 'red':
-                self.squares[3][i] = Square(3, i, Soldier(color))
+                self.squares[6][i] = Square(6, i, Soldier(color)) # Đã sửa từ [3][i] -> [6][i]
             else:
-                self.squares[6][i] = Square(6, i, Soldier(color))
+                self.squares[3][i] = Square(3, i, Soldier(color)) # Đã sửa từ [6][i] -> [3][i]
         
-        # Add cannons
+        # ─────────────────────────────────────────────────────────────
+        # 2. PHÁO (Cannons)
+        # RED (Đỏ): Hàng 7
+        # BLACK (Đen): Hàng 2
         for i in [1, 7]:
             if color == 'red':
-                self.squares[2][i] = Square(2, i, Cannon(color))
+                self.squares[7][i] = Square(7, i, Cannon(color)) # Đã sửa từ [2][i] -> [7][i]
             else:
-                self.squares[7][i] = Square(7, i, Cannon(color))
+                self.squares[2][i] = Square(2, i, Cannon(color)) # Đã sửa từ [7][i] -> [2][i]
         
-        # Add chariots
+        # ─────────────────────────────────────────────────────────────
+        # 3. CÁC QUÂN CƠ BẢN (Xe, Mã, Tượng, Sĩ, Tướng)
+        # RED (Đỏ): Hàng 9
+        # BLACK (Đen): Hàng 0
+        
+        base_row = 9 if color == 'red' else 0 # Xác định hàng cơ sở
+        
+        # Add chariots (Xe)
         for i in [0, 8]:
-            if color == 'red':
-                self.squares[0][i] = Square(0, i, Chariot(color))
-            else:
-                self.squares[9][i] = Square(9, i, Chariot(color))
+            self.squares[base_row][i] = Square(base_row, i, Chariot(color))
         
-        # Add horses
+        # Add horses (Mã)
         for i in [1, 7]:
-            if color == 'red':
-                self.squares[0][i] = Square(0, i, Horse(color))
-            else:                
-                self.squares[9][i] = Square(9, i, Horse(color))
+            self.squares[base_row][i] = Square(base_row, i, Horse(color))
         
-        # Add elephants
+        # Add elephants (Tượng)
         for i in [2, 6]:
-            if color == 'red':
-                self.squares[0][i] = Square(0, i, Elephant(color))
-            else:
-                self.squares[9][i] = Square(9, i, Elephant(color))
+            self.squares[base_row][i] = Square(base_row, i, Elephant(color))
         
-        # Add advisors
+        # Add advisors (Sĩ)
         for i in [3, 5]:
-            if color == 'red':
-                self.squares[0][i] = Square(0, i, Advisor(color))
-            else:
-                self.squares[9][i] = Square(9, i, Advisor(color))
+            self.squares[base_row][i] = Square(base_row, i, Advisor(color))
         
-        # Add general
-        if color == 'red':
-            self.squares[0][4] = Square(0, 4, General(color))
-        else:
-            self.squares[9][4] = Square(9, 4, General(color)) 
+        # Add general (Tướng)
+        self.squares[base_row][4] = Square(base_row, 4, General(color))
         
 board = Board()
