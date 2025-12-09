@@ -277,7 +277,7 @@ class GameState:
 
         # Tốt
         elif abs_piece == TOT:
-            d = -1 if player == BLACK else 1
+            d = 1 if player == BLACK else 1
             targets = [(r + d, c)]
             if (player == RED and r < river_limit) or (player == BLACK and r > river_limit):
                 targets.extend([(r, c + 1), (r, c - 1)])
