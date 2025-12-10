@@ -24,3 +24,6 @@ ASSIGNMENT2_AI
    ```
 * Run
    ..\Assignment2_AI> python -m src.ui.main
+
+
+python play_games.py ==> chạy 100tc
