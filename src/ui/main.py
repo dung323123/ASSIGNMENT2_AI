@@ -104,7 +104,7 @@ class Main:
                 # -----------------------
                 if self.ui_state == "select_ai":
 
-                    if self.btn_minimax.collidepoint(mx,my):
+                    if self.btn_minmax.collidepoint(mx,my):
                         self.selected_agent = TypeAgent.MINMAX
                     elif self.btn_ml.collidepoint(mx,my):
                         self.selected_agent = TypeAgent.MACHINE
