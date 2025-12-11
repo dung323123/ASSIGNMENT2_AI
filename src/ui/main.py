@@ -49,27 +49,35 @@ class Main:
     def draw_ai_selection(self):
         self.screen.fill((30, 30, 30))
 
-        # Title
+        screen_w = self.screen.get_width()
+
+        # ====== CĂN GIỮA NÚT ======
+        self.btn_minmax.centerx = screen_w // 2
+        self.btn_ml.centerx = screen_w // 2
+
+        # ====== TITLE ======
         title_font = pygame.font.SysFont(None, 48)
         title = title_font.render("SELECT TYPE OF AI AGENT", True, (255,255,255))
-        self.screen.blit(title, (150, 50))
+        title_rect = title.get_rect(center=(screen_w//2, 50))
+        self.screen.blit(title, title_rect)
 
-        # Button background
+        # ====== BUTTON BACKGROUND ======
         pygame.draw.rect(self.screen, (100,100,100), self.btn_minmax, border_radius=8)
         pygame.draw.rect(self.screen, (100,100,100), self.btn_ml, border_radius=8)
 
-        # ---- TEXT INSIDE BUTTON ----
+        # ====== TEXT INSIDE BUTTONS ======
         font_btn = pygame.font.SysFont(None, 32)
 
-        # Minimax text
+        # Minimax
         text_minimax = font_btn.render("Minimax", True, (255,255,255))
         rect_minimax = text_minimax.get_rect(center=self.btn_minmax.center)
         self.screen.blit(text_minimax, rect_minimax)
 
-        # Machine Learning text
+        # Machine Learning
         text_ml = font_btn.render("Machine Learning", True, (255,255,255))
         rect_ml = text_ml.get_rect(center=self.btn_ml.center)
         self.screen.blit(text_ml, rect_ml)
+
 
         
     def draw_game_buttons(self): 
