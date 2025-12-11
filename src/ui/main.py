@@ -35,15 +35,15 @@ class Main:
         
         self.game = Game() 
         self.playing = True # True if playing, False if stop
-        self.agent_red = MinimaxAgent(player_symbol=RED)
-        self.agent_black = RandomAgent(player_symbol=BLACK) # replace this agent by another AI agent
+        self.agent_red = None # replace this agent by another AI agent
+        self.agent_black =  RandomAgent(player_symbol=BLACK)
         self.winner=None
     
     def create_agent(self, agent_type):
         if agent_type == TypeAgent.MINMAX:
-            return RandomAgent(player_symbol=BLACK)
+            return MinimaxAgent(player_symbol=RED) 
         if agent_type == TypeAgent.MACHINE:
-            return RandomAgent(player_symbol=BLACK)
+            return RandomAgent(player_symbol=RED)
         raise ValueError("Unknown agent type")
     
     def draw_ai_selection(self):
@@ -102,7 +102,7 @@ class Main:
                         self.selected_agent = TypeAgent.MACHINE
 
                     if self.selected_agent:
-                        self.agent_black = self.create_agent(self.selected_agent)
+                        self.agent_red = self.create_agent(self.selected_agent)
                         self.ui_state = UIState.GAME
 
                 # -----------------------
@@ -174,7 +174,7 @@ class Main:
                             self.selected_agent = TypeAgent.MACHINE
 
                         if self.selected_agent:
-                            self.agent_black = self.create_agent(self.selected_agent)
+                            self.agent_red = self.create_agent(self.selected_agent)
                             self.running = False
                             self.winner = None
                             self.ui_state = UIState.GAME
