@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 BOARD_ROWS, BOARD_COLS = 10, 9
 RED, BLACK = 1, -1
@@ -119,7 +119,7 @@ PST_MAP = {
 }
 class GameState:
 
-    def __init__(self, initial_board: np.ndarray = None, current_player: Player = RED, history: List[Move] = None):
+    def __init__(self, initial_board: np.ndarray = None, current_player: Player = RED, history: List[Move] = None, board_repetition_count: Dict[Tuple, int] = None):
         """
         Khởi tạo 1 trạng thái bàn cờ:
         - initial_board: mảng 10x9 nếu muốn set trạng thái tùy ý, nếu None → set vị trí ban đầu
@@ -129,7 +129,7 @@ class GameState:
         self.board: np.ndarray = initial_board if initial_board is not None else self._setup_initial_board()
         self.current_player: Player = current_player
         self.history: List[Move] = history if history is not None else []
-
+        self.board_repetition_count: Dict[Tuple, int] = board_repetition_count if board_repetition_count is not None else {}
 
     def is_on_board(self, r: int, c: int) -> bool:
         """Kiểm tra tọa độ có nằm trong phạm vi bàn cờ hay không."""
@@ -277,7 +277,7 @@ class GameState:
 
         # Tốt
         elif abs_piece == TOT:
-            d = 1 if player == BLACK else 1
+            d = 1 if player == BLACK else -1
             targets = [(r + d, c)]
             if (player == RED and r < river_limit) or (player == BLACK and r > river_limit):
                 targets.extend([(r, c + 1), (r, c - 1)])
@@ -309,7 +309,7 @@ class GameState:
                         if target == general_pos:
                             return True
         return False
-
+    
     def is_general_facing(self) -> bool:
         """
         Kiểm tra luật “hai Tướng không được nhìn thẳng nhau”.
@@ -332,14 +332,22 @@ class GameState:
         Tạo ra 1 trạng thái bàn cờ MỚI sau khi thực hiện nước đi
         Không mutate trạng thái hiện tại (để Minimax hoạt động đúng)
         """
+        src, dst = move
+        piece = self.get_piece_at(src)
+        new_repetition_count = self.board_repetition_count.copy()
         new_state = GameState(
             initial_board=self.board.copy(),
             current_player=-self.current_player,
-            history=self.history + [move]
+            history=self.history + [move],
+            board_repetition_count = new_repetition_count
         )
-        src, dst = move
-        new_state.board[dst] = self.get_piece_at(src)
+        
+        new_state.board[dst] = piece
         new_state.board[src] = EMPTY
+        board_tuple = tuple(new_state.board.flatten()) 
+    
+        # 3. Cập nhật số lần lặp
+        new_repetition_count[board_tuple] = new_repetition_count.get(board_tuple, 0) + 1
         return new_state
 
     def get_all_legal_moves(self) -> List[Move]:
@@ -362,6 +370,7 @@ class GameState:
                         # Kiểm tra xem Tướng của người vừa đi (self.current_player) có bị chiếu trên bàn cờ mới không.
                         if not test_state.is_check(self.current_player) and not test_state.is_general_facing():
                             legal.append(move)
+                        
         return legal
 
     def is_game_over(self) -> bool:
@@ -441,7 +450,47 @@ class GameState:
             red_score -= 500  # Phạt nặng
         if self.is_check(BLACK):
             black_score -= 500
+    
+        current_board_tuple = tuple(self.board.flatten())
+    
+        # Lấy số lần lặp lại trạng thái này trong lịch sử
+        repetition_count = self.board_repetition_count.get(current_board_tuple, 0)
         
+        # Nếu trạng thái lặp lại 3 lần trở lên, nó gần như là một nước hòa theo luật
+        if repetition_count >= 3:
+            # Nếu đang ở lượt của mình (player) mà nước đi dẫn đến hòa (lặp lại),
+            # thì đây là nước đi kém (cho dù mình đang thắng vật chất) 
+            # trừ khi trạng thái vật chất đang nghiêng về mình.
+            
+            # Để đơn giản, ta phạt nặng cả hai bên (để thuật toán Minimax tránh trạng thái này)
+            # hoặc gán giá trị sát 0 để buộc hòa.
+            
+            # Chúng ta dùng một giá trị rất nhỏ (gần hòa) để thuật toán tránh nước đi này
+            # khi đang ở thế thắng, nhưng chấp nhận nó khi đang ở thế thua.
+            
+            score_diff = red_score - black_score
+            
+            if player == RED:
+                # Nếu Đỏ đang lợi thế (> 0) mà buộc hòa -> Phạt
+                if score_diff > 100:
+                    return float(score_diff - 1000)
+                # Nếu Đỏ đang bất lợi (< 0) mà hòa -> Thưởng nhẹ
+                elif score_diff < -100:
+                    return float(score_diff + 500)
+                # Nếu cân bằng
+                else:
+                    return 0.0 # Giá trị Hòa
+        
+            else: # player == BLACK
+                # Nếu Đen đang lợi thế (< 0, vì black_score > red_score) mà buộc hòa -> Phạt
+                if score_diff < -100:
+                    return float(score_diff + 1000)
+                # Nếu Đen đang bất lợi (> 0) mà hòa -> Thưởng nhẹ
+                elif score_diff > 100:
+                    return float(score_diff - 500)
+                # Nếu cân bằng
+                else:
+                    return 0.0 # Giá trị Hòa
 
         # Trả về điểm theo quan điểm của 'player' đang xét (Điểm của mình - Điểm của địch)
         if player == RED:

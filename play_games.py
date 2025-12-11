@@ -9,7 +9,7 @@ from src.agents.random_agent import RandomAgent
 
 
 class GameTester:
-    def __init__(self, num_games: int = 100, max_depth: int = 2):
+    def __init__(self, num_games: int = 10, max_depth: int = 2):
         """
         num_games: số ván chơi cần chạy
         max_depth: độ sâu của minimax
