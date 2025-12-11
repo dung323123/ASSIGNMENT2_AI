@@ -1,0 +1,7 @@
+venv/
+.venv/
+env/
+ENV/
+dataset_minimax_vs_random.csv
+dataset_minimax_vs_random.json
+*.pyc

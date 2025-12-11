@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 import math
+import copy
 from src.game.board import GameState, Move, Player
 
 class MinimaxAgent:
@@ -45,6 +46,67 @@ class MinimaxAgent:
         print("Best move :", best_move )
         print("--------------------------------------------------" )
         return best_move
+
+    def get_move_with_data(self, state: GameState) -> Dict[str, Any]:
+        """
+        Chọn nước đi tốt nhất và trả về dữ liệu đầy đủ cho dataset.
+        
+        Returns:
+            Dict chứa:
+            - board: trạng thái bàn cờ (copy của state.board)
+            - all_legal_moves: tất cả các nước đi hợp lệ
+            - best_move: nước đi được chọn
+            - best_score: điểm số minimax của nước đi được chọn
+            - current_player: người chơi hiện tại
+            - is_maximizing: True nếu là lượt người chơi có AI, False ngược lại
+        """
+        maximizing = (state.current_player == self.player)
+
+        best_score = -math.inf if maximizing else math.inf
+        best_move = None
+        all_moves = state.get_all_legal_moves()
+
+        # Nếu không có nước đi hợp lệ
+        if not all_moves:
+            return {
+                'board': copy.deepcopy(state.board),
+                'all_legal_moves': all_moves,
+                'best_move': None,
+                'best_score': None,
+                'current_player': state.current_player,
+                'is_maximizing': maximizing,
+                'has_legal_moves': False
+            }
+
+        for move in all_moves:
+            next_state = state.make_move(move)
+
+            score = self._minimax(
+                next_state,
+                depth=self.max_depth - 1,
+                alpha=-math.inf,
+                beta=math.inf,
+                maximizing=(next_state.current_player == self.player)
+            )
+
+            if maximizing:
+                if score > best_score:
+                    best_score = score
+                    best_move = move
+            else:
+                if score < best_score:
+                    best_score = score
+                    best_move = move
+
+        return {
+            'board': copy.deepcopy(state.board),
+            'all_legal_moves': all_moves,
+            'best_move': best_move,
+            'best_score': best_score,
+            'current_player': state.current_player,
+            'is_maximizing': maximizing,
+            'has_legal_moves': True
+        }
 
     def _minimax(self, state: GameState, depth: int, alpha: float, beta: float, maximizing: bool) -> float:
         """
