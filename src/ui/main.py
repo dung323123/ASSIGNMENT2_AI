@@ -8,6 +8,7 @@ from src.ui.move import Move, Position
 from src.game.board import GameState
 from src.agents.random_agent import RandomAgent
 from src.agents.minimax_agent import MinimaxAgent
+from src.agents.ml_agent import MLAgent
 
 class UIState(Enum):
     SELECT_AI = "select_ai"
@@ -43,7 +44,7 @@ class Main:
         if agent_type == TypeAgent.MINMAX:
             return MinimaxAgent(player_symbol=RED) 
         if agent_type == TypeAgent.MACHINE:
-            return RandomAgent(player_symbol=RED)
+            return MLAgent(player_symbol=RED)
         raise ValueError("Unknown agent type")
     
     def draw_ai_selection(self):

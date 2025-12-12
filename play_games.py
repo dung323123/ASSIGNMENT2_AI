@@ -1,8 +1,3 @@
-"""
-Script để chạy nhiều ván chơi và thống kê kết quả (không sinh dataset)
-RED (Minimax) vs BLACK (Random)
-"""
-
 from src.game.board import GameState, RED, BLACK
 from src.agents.minimax_agent import MinimaxAgent
 from src.agents.random_agent import RandomAgent

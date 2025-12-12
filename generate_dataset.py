@@ -1,266 +1,211 @@
-"""
-Script để sinh dataset từ các ván chơi Minimax vs Minimax
-Lưu dữ liệu vào file CSV để sử dụng cho huấn luyện ML agent
-"""
-
 import csv
 import json
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 import numpy as np
+
 from src.game.board import GameState, RED, BLACK
 from src.agents.minimax_agent import MinimaxAgent
 from src.agents.random_agent import RandomAgent
-from src.agents.base_agent import BaseAgent
 
+Move = Tuple[Tuple[int, int], Tuple[int, int]]
 
-class DatasetGenerator:
-    def __init__(self, num_games: int = 10, max_depth: int = 2, output_file: str = "dataset.csv"):
-        """
-        num_games: số ván chơi cần sinh
-        max_depth: độ sâu của minimax
-        output_file: tên file lưu dataset
-        
-        Note: RED là Minimax agent, BLACK là Random agent (cố định)
-              Chỉ lưu dữ liệu nước đi của Minimax (RED)
-        """
+class DatasetGenerator92:
+    def __init__(
+        self,
+        num_games: int = 100,
+        max_depth: int = 2,
+        output_file: str = "dataset.csv",
+        board_dtype=np.int64,
+        save_all_games: bool = True,
+        save_only_red: bool = False,
+        overwrite: bool = False  # <--- ALWAYS append if False
+    ):
         self.num_games = num_games
         self.max_depth = max_depth
         self.output_file = output_file
-        self.current_game_number = 0  # Đếm số ván chơi
-        
-        # RED luôn là Minimax (để tạo dataset)
-        self.red_agent = MinimaxAgent(RED, max_depth=max_depth)
-        
-        # BLACK luôn là Random agent
-        self.black_agent = RandomAgent(player_symbol=BLACK)
-        
-        self.dataset = []
-        self.move_count = 0
+        self.board_dtype = board_dtype
+        self.save_all_games = save_all_games
+        self.save_only_red = save_only_red
+        self.overwrite = overwrite
 
+        # Agents
+        self.red_agent = MinimaxAgent(RED, max_depth)
+        self.black_agent = RandomAgent(BLACK)
+
+        self.dataset: List[Dict[str, Any]] = []
+
+
+    # -------------------------
+    # Encoding helpers
+    # -------------------------
     def board_to_string(self, board: np.ndarray) -> str:
-        """Chuyển board numpy array thành string để lưu vào CSV"""
-        return board.flatten().tobytes().hex()
+        b = board.astype(self.board_dtype, copy=False)
+        return b.flatten().tobytes().hex()
 
-    def board_from_string(self, board_str: str) -> np.ndarray:
-        """Chuyển string về lại numpy array"""
-        if not board_str:
-            return np.zeros((10, 9), dtype=int)
-        board_bytes = bytes.fromhex(board_str)
-        return np.frombuffer(board_bytes, dtype=int).reshape(10, 9)
-
-    def move_to_string(self, move) -> str:
-        """Chuyển move thành string"""
+    def move_to_string(self, move: Move) -> str:
         if move is None:
             return "None"
-        return f"{move[0]},{move[1]}"
+        (r1, c1), (r2, c2) = move
+        return f"{r1},{c1}->{r2},{c2}"
 
-    def play_one_game(self) -> Dict[str, Any]:
-        """
-        Chơi 1 ván đầy đủ giữa RED minimax vs BLACK random agent
-        Chỉ lưu dữ liệu nước đi của RED (Minimax)
-        Trả về kết quả ván (thắng/thua/hòa)
-        """
-        self.current_game_number += 1
+
+    # -------------------------
+    # Play one game
+    # -------------------------
+    def play_one_game(self) -> Tuple[List[Dict[str, Any]], int]:
         state = GameState()
-        move_history = []
-        game_data = []
-
-        print(f"\n{'='*60}")
-        print(f"Ván chơi #{self.current_game_number}")
-        print(f"{'='*60}")
-
+        samples: List[Dict[str, Any]] = []
         turn = 0
-        max_turns = 200  # Tránh vòng lặp vô hạn
+        max_turns = 150
 
         while not state.is_game_over() and turn < max_turns:
             turn += 1
-            current_player = state.current_player
-            
-            if current_player == RED:
-                # RED: Minimax agent
-                move_data = self.red_agent.get_move_with_data(state)
+            player = state.current_player
 
-                if not move_data['has_legal_moves']:
-                    print(f"Lượt {turn}: RED (Minimax) không có nước đi hợp lệ → Thua!")
+            legal_moves = state.get_all_legal_moves()
+            if not legal_moves:
+                break
+
+            if player == RED:
+                mdata = self.red_agent.get_move_with_data(state)
+                if not mdata.get("has_legal_moves", True):
                     break
-
-                best_move = move_data['best_move']
-                best_score = move_data['best_score']
-
-                # Lưu dữ liệu nước đi của Minimax
-                data_point = {
-                    'board': self.board_to_string(move_data['board']),
-                    'current_player': current_player,
-                    'all_legal_moves': str(move_data['all_legal_moves']),
-                    'best_move': self.move_to_string(best_move),
-                    'best_score': best_score,
-                    'is_maximizing': move_data['is_maximizing'],
-                    'turn': turn
-                }
-                game_data.append(data_point)
-
-                print(f"Lượt {turn}: RED (Minimax) di chuyển {best_move}, score={best_score}")
-
+                selected_move = mdata["best_move"]
+                board_arr = state.board.copy()
             else:
-                # BLACK: Random agent (không lưu dữ liệu)
-                legal_moves = state.get_all_legal_moves()
-                if not legal_moves:
-                    print(f"Lượt {turn}: BLACK (Random) không có nước đi hợp lệ → Thua!")
-                    break
+                selected_move = self.black_agent.get_move(state)
+                board_arr = state.board.copy()
 
-                best_move = self.black_agent.get_move(state)
-                print(f"Lượt {turn}: BLACK (Random) di chuyển {best_move}")
+            # Save sample (RED only or both players)
+            if (not self.save_only_red) or (self.save_only_red and player == RED):
+                try:
+                    value = float(state.evaluate_heuristic(player))
+                except Exception:
+                    value = 0.0
 
-            move_history.append(best_move)
-            self.move_count += 1
+                sample = {
+                    "board": self.board_to_string(board_arr),
+                    "board_element_bytes": int(np.dtype(self.board_dtype).itemsize),
+                    "current_player": int(player),
+                    "legal_moves": str(legal_moves),
+                    "selected_move": self.move_to_string(selected_move),
+                    "value": float(value),
+                    "is_terminal": int(state.is_game_over()),
+                    "outcome": 0  # fill later
+                }
+                samples.append(sample)
 
-            # Thực hiện nước đi
-            state = state.make_move(best_move)
+            # Apply move
+            state = state.make_move(selected_move)
 
-        # Xác định người thắng
+        # Determine winner
         if state.is_game_over():
-            winner = -state.current_player  # Người trước đó là người thắng
-            winner_name = "RED (Minimax)" if winner == RED else "BLACK (Random)"
-            print(f"\n✓ {winner_name} thắng sau {turn} lượt!")
+            winner = -state.current_player
         else:
-            winner_name = "Hòa (vượt quá 200 lượt)"
-            winner = 0
-            print(f"\n✗ {winner_name}")
+            winner = 0  # draw
 
-        return {
-            'winner': winner,
-            'winner_name': winner_name,
-            'total_turns': turn,
-            'move_history': move_history,
-            'game_data': game_data
-        }
+        # Fill outcomes
+        for s in samples:
+            if winner == 0:
+                s["outcome"] = 0
+            else:
+                s["outcome"] = 1 if s["current_player"] == winner else -1
 
+        return samples, winner
+
+
+    # -------------------------
+    # Generate many games
+    # -------------------------
     def generate_dataset(self):
-        """Sinh dataset từ nhiều ván chơi"""
-        print(f"\n{'#'*60}")
-        print(f"# Bắt đầu sinh dataset: {self.num_games} ván chơi")
-        print(f"# RED: Minimax (depth={self.max_depth})")
-        print(f"# BLACK: Random Agent")
-        print(f"# Chỉ lưu dữ liệu nước đi của RED (Minimax)")
-        print(f"{'#'*60}")
+        print(f"=== GENERATING DATASET ({self.num_games} games) ===")
+        saved_games = 0
+        total_records = 0
 
-        game_results = []
+        for i in range(self.num_games):
+            game_samples, winner = self.play_one_game()
 
-        for game_num in range(self.num_games):
-            try:
-                game_result = self.play_one_game()
-                game_results.append(game_result)
+            should_save = self.save_all_games or (winner == RED)
+            if should_save and game_samples:
+                self.dataset.extend(game_samples)
+                saved_games += 1
+                total_records += len(game_samples)
 
-                # Thêm dữ liệu từ ván này vào dataset
-                for data_point in game_result['game_data']:
-                    # Thêm thông tin kết quả ván
-                    data_point['game_result'] = game_result['winner_name']
-                    self.dataset.append(data_point)
+            print(f"[Game {i+1}] Winner={winner}, Produced={len(game_samples)}, Saved={should_save and len(game_samples)}>")
 
-            except Exception as e:
-                print(f"❌ Lỗi khi chơi ván {game_num + 1}: {e}")
-                import traceback
-                traceback.print_exc()
+        print("==== DONE ====")
+        print(f"Saved games: {saved_games}/{self.num_games}")
+        print(f"Total records: {total_records}")
 
-        print(f"\n{'#'*60}")
-        print(f"# Hoàn thành sinh dataset")
-        print(f"# Số ván chơi: {len(game_results)}")
-        print(f"# Tổng số nước đi: {self.move_count}")
-        print(f"# Tổng số dữ liệu: {len(self.dataset)}")
-        print(f"{'#'*60}")
 
-        return game_results
-
-    def save_to_csv(self):
-        """Lưu dataset vào CSV"""
+    # -------------------------
+    # SAVE CSV — ALWAYS APPEND
+    # -------------------------
+    def save_csv(self):
         if not self.dataset:
-            print("❌ Dataset rỗng! Không thể lưu.")
+            print("No data to save.")
             return
 
-        try:
-            output_path = os.path.join(os.path.dirname(__file__), self.output_file)
+        path = os.path.join(os.path.dirname(__file__), self.output_file)
+        file_exists = os.path.exists(path)
 
-            with open(output_path, 'w', newline='', encoding='utf-8') as f:
-                fieldnames = [
-                    'board',
-                    'current_player',
-                    'all_legal_moves',
-                    'best_move',
-                    'best_score',
-                    'is_maximizing',
-                    'turn',
-                    'game_result'
-                ]
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
+        mode = "a" if file_exists else "w"
+
+        fields = [
+            "board",
+            "board_element_bytes",
+            "current_player",
+            "legal_moves",
+            "selected_move",
+            "value",
+            "is_terminal",
+            "outcome",
+        ]
+
+        with open(path, mode, newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fields)
+            if not file_exists:
                 writer.writeheader()
-                writer.writerows(self.dataset)
+            writer.writerows(self.dataset)
 
-            print(f"✓ Dataset đã lưu vào: {output_path}")
-            print(f"  Số dòng dữ liệu: {len(self.dataset)}")
+        print(f"APPENDED CSV to {path} (rows added: {len(self.dataset)}; mode={mode})")
 
-        except Exception as e:
-            print(f"❌ Lỗi khi lưu CSV: {e}")
-            import traceback
-            traceback.print_exc()
 
-    def save_to_json(self):
-        """Lưu dataset vào JSON (có thể lưu trữ board dưới dạng mảng)"""
-        if not self.dataset:
-            print("❌ Dataset rỗng! Không thể lưu.")
-            return
+    # -------------------------
+    # SAVE JSON — ALWAYS APPEND
+    # -------------------------
+    def save_json(self):
+        path = self.output_file.replace(".csv", ".json")
+        path = os.path.join(os.path.dirname(__file__), path)
 
-        try:
-            output_path = os.path.join(os.path.dirname(__file__), 
-                                      self.output_file.replace('.csv', '.json'))
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                old_data = json.load(f)
+        else:
+            old_data = []
 
-            json_data = []
-            for data_point in self.dataset:
-                json_point = data_point.copy()
-                # Chuyển board từ string hex về list
-                json_point['board'] = self.board_from_string(data_point['board']).tolist()
-                json_data.append(json_point)
+        old_data.extend(self.dataset)
 
-            with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump(json_data, f, indent=2, ensure_ascii=False)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(old_data, f, indent=2)
 
-            print(f"✓ Dataset đã lưu vào: {output_path}")
-            print(f"  Số dòng dữ liệu: {len(json_data)}")
-
-        except Exception as e:
-            print(f"❌ Lỗi khi lưu JSON: {e}")
-            import traceback
-            traceback.print_exc()
+        print(f"APPENDED JSON to {path} (total items now: {len(old_data)})")
 
 
 def main():
-    # Khởi tạo generator
-    generator = DatasetGenerator(
-        num_games=5,                    # Sinh 5 ván chơi
-        max_depth=2,                    # Minimax depth = 2
-        output_file="dataset_minimax_vs_random.csv"
+    gen = DatasetGenerator92(
+        num_games=500,
+        max_depth=2,
+        output_file="dataset.csv",
+        board_dtype=np.int64,
+        save_all_games=True,
+        save_only_red=False,
+        overwrite=False   # <--- ALWAYS append mode
     )
-
-    # Sinh dataset
-    game_results = generator.generate_dataset()
-
-    # Lưu vào CSV và JSON
-    generator.save_to_csv()
-    generator.save_to_json()
-
-    # Thống kê kết quả
-    print(f"\n{'='*60}")
-    print("THỐNG KÊ KẾT QUẢ")
-    print(f"{'='*60}")
-    
-    red_wins = sum(1 for g in game_results if g['winner'] == RED)
-    black_wins = sum(1 for g in game_results if g['winner'] == BLACK)
-    draws = len(game_results) - red_wins - black_wins
-
-    print(f"RED (Minimax) thắng: {red_wins}")
-    print(f"BLACK (Random) thắng: {black_wins}")
-    print(f"Hòa: {draws}")
-    print(f"Tổng ván: {len(game_results)}")
+    gen.generate_dataset()
+    gen.save_csv()
+    gen.save_json()
 
 
 if __name__ == "__main__":
